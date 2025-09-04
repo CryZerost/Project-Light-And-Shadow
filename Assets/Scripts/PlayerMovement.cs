@@ -29,20 +29,46 @@ public class PlayerMovement : MonoBehaviour
     public SpriteRenderer charaSprite;
     public Sprite charaImage;
 
+    [Header("Dash")]
+    private bool canDash = true;
+    private bool isDashing;
+    [SerializeField]private float dashingPower = 24f;
+    private float dashingTime = 1f;
+    private float dashingCooldown = 1f;
+    [SerializeField] private TrailRenderer tr;
+
+    [Header("Sound Effect")]
+    public AudioSource sfxSource;
+    public AudioClip jumpClip;
+    public AudioClip suaraMati;
+
+    [Header("Mouse Position")]
+    private Camera mainCamera;
+    private Vector3 mousePos;
+
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);  
+
+
+
         playerMove();
 
         playerJump();
 
-        if(playerHealth <= 0)
+        playerDash();
+
+
+
+        if (playerHealth <= 0)
         {
             DieAnimation(); //memanggil method die animation
             Invoke("ResetLevel", 2f); // setelah 2 detik dia bakal memanggil Reset Level Method dengan invoke 
@@ -84,6 +110,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (collision.gameObject.CompareTag("Border"))
         {
+            sfxSource.PlayOneShot(suaraMati);
             playerHealth = 0;
         }
     }
@@ -119,13 +146,30 @@ public class PlayerMovement : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.W) && isGrounded)
             {
                 rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+                sfxSource.PlayOneShot(jumpClip);
             }
         }
 
     }
 
+    void playerDash()
+    {
+        if (isPlayerOn)
+        {
+            if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+            {
+                StartCoroutine(playerDashing());
+            }
+        }
+    }
+
     private void FixedUpdate()
     {
+        if (isDashing)
+        {
+            return;
+        }
+
         rb.velocity = new Vector2(moveInput * moveSpeed, rb.velocity.y);
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, layerMask);
     }
@@ -137,5 +181,21 @@ public class PlayerMovement : MonoBehaviour
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
+    }
+
+    private IEnumerator playerDashing()
+    {
+        canDash = false;
+        isDashing = true;
+        float originalGravity = rb.gravityScale;
+        rb.gravityScale = 0f;
+        rb.velocity = new Vector2(mousePos.x * dashingPower, mousePos.y * dashingPower);
+        tr.emitting = true;
+        yield return new WaitForSeconds(dashingTime);
+        tr.emitting = false;
+        rb.gravityScale = originalGravity;
+        isDashing = false;
+        yield return new WaitForSeconds(dashingCooldown);
+        canDash = true;
     }
 }

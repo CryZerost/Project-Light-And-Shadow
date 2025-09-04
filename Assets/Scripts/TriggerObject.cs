@@ -8,7 +8,10 @@ public class TriggerObject : MonoBehaviour
     [SerializeField] bool isRange = false;
     [SerializeField] bool isTurnOn;
     public GameObject lightSource;
+    //public GameObject lightSource1;
     public GameObject darkSource;
+    //public GameObject darkSource1;
+
 
     public SpriteRenderer mainSprite;
     public Sprite leftTrigger;
@@ -40,7 +43,9 @@ public class TriggerObject : MonoBehaviour
         {
             isTurnOn = !isTurnOn;
             lightSource.SetActive(isTurnOn);
+            //lightSource1.SetActive(!isTurnOn);
             darkSource.SetActive(!isTurnOn);
+            //darkSource1.SetActive(isTurnOn);
 
             if (isTurnOn)
             {
